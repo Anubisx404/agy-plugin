@@ -51,6 +51,10 @@ log = logging.getLogger("agy_proxy")
 
 app = FastAPI(title="AGY Proxy", version="2.0.0")
 
+from dashboard import router as dashboard_router, tracker as usage_tracker  # noqa: E402
+
+app.include_router(dashboard_router)
+
 _model_cache: dict[str, Any] = {"ts": 0.0, "models": []}
 
 
@@ -493,13 +497,19 @@ async def chat_completions(request: Request):
     request_id = uuid.uuid4().hex[:12]
 
     if has_tools:
+        t0 = time.time()
         loop = asyncio.get_event_loop()
         output = await loop.run_in_executor(None, _run_agy_sync, prompt, model, timeout)
+        duration_ms = (time.time() - t0) * 1000
 
         content, tool_calls = _parse_tool_calls(output)
         log.info("Tool call parse: has_tool_calls=%s content_len=%s", tool_calls is not None, len(content or ""))
 
         response = _completion_response(request_id, model, content, tool_calls, prompt, output)
+        usage_tracker.record(
+            model, response["usage"]["prompt_tokens"], response["usage"]["completion_tokens"],
+            messages=messages, duration_ms=duration_ms, stream=stream,
+        )
 
         if stream:
 
@@ -515,15 +525,26 @@ async def chat_completions(request: Request):
         return response
 
     if stream:
+        usage_tracker.record(
+            model, len(prompt.split()), 0,  # ponytail: completion tokens unknown in stream
+            messages=messages, stream=True,
+        )
         return StreamingResponse(
             _run_agy_streaming(prompt, model, timeout, request_id=request_id),
             media_type="text/event-stream",
             headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Request-Id": request_id},
         )
 
+    t0 = time.time()
     loop = asyncio.get_event_loop()
     output = await loop.run_in_executor(None, _run_agy_sync, prompt, model, timeout)
-    return _completion_response(request_id, model, output, prompt=prompt, output=output)
+    duration_ms = (time.time() - t0) * 1000
+    resp = _completion_response(request_id, model, output, prompt=prompt, output=output)
+    usage_tracker.record(
+        model, resp["usage"]["prompt_tokens"], resp["usage"]["completion_tokens"],
+        messages=messages, duration_ms=duration_ms, stream=False,
+    )
+    return resp
 
 
 def main():
