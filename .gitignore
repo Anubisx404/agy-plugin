@@ -7,3 +7,4 @@ dist/
 build/
 proxy.log
 .env
+desktop.ini

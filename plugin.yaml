@@ -1,0 +1,6 @@
+name: antigravity
+kind: model-provider
+version: 3.0.0
+description: "Antigravity (AGY) direct model provider for Hermes Agent"
+author: "Anubisx404"
+tags: [model-provider, google, antigravity, gemini, direct-process]
