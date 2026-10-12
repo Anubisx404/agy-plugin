@@ -32,12 +32,12 @@ jobs:
       - name: Create release archive
         run: |
           mkdir -p dist
-          zip dist/agy-proxy-${{ steps.version.outputs.VERSION }}.zip \
-            agy_proxy.py requirements.txt README.md LICENSE
+          zip dist/antigravity-plugin-${{ steps.version.outputs.VERSION }}.zip \
+            plugin.yaml __init__.py client.py models.py README.md LICENSE
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: AGY Proxy ${{ steps.version.outputs.VERSION }}
+          name: Antigravity Plugin ${{ steps.version.outputs.VERSION }}
           generate_release_notes: true
-          files: dist/agy-proxy-${{ steps.version.outputs.VERSION }}.zip
+          files: dist/antigravity-plugin-${{ steps.version.outputs.VERSION }}.zip

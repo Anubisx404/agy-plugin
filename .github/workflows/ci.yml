@@ -20,13 +20,12 @@ jobs:
       - name: Install dependencies
         run: |
           pip install ruff
-          pip install -r requirements.txt
 
       - name: Ruff check
-        run: ruff check agy_proxy.py
+        run: ruff check .
 
       - name: Ruff format check
-        run: ruff format --check agy_proxy.py
+        run: ruff format --check .
 
   test:
     name: Test (${{ matrix.os }} / Python ${{ matrix.python }})
