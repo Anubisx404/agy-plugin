@@ -1,6 +1,11 @@
 name: antigravity
 kind: model-provider
-version: 3.0.0
-description: "Antigravity (AGY) direct model provider for Hermes Agent"
+version: 4.0.0
+description: "Google Antigravity (agy) model provider for Hermes Agent. Keeps a persistent background agy worker per Hermes session so each turn sends only new messages, streams text and tool calls, maps reasoning effort, intercepts agy's native tools, and reports quota in /usage."
 author: "Anubisx404"
-tags: [model-provider, google, antigravity, gemini, direct-process]
+license: MIT
+homepage: https://github.com/Anubisx404/agy-plugin
+platforms: [linux, macos, windows]
+external_dependencies:
+  - command: agy
+tags: [model-provider, google, antigravity, gemini, persistent-worker]

@@ -33,7 +33,8 @@ jobs:
         run: |
           mkdir -p dist
           zip dist/antigravity-plugin-${{ steps.version.outputs.VERSION }}.zip \
-            plugin.yaml __init__.py client.py models.py README.md LICENSE
+            plugin.yaml __init__.py client.py models.py process.py prompt.py usage.py worker.py \
+            README.md CHANGELOG.md LICENSE
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

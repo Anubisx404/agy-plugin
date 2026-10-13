@@ -1,5 +1,31 @@
 # Changelog
 
+## v4.0.0 — 2026-10-13
+
+### Added
+- **Persistent background agy workers.** Turns run on a long-lived `agy --input-format stream-json` process that keeps the conversation across turns; after the first turn only the new messages are sent. Workers live in a process-wide pool keyed by the Hermes session id (passed through `build_extra_body`), so they survive Hermes creating and closing request-scoped clients. Requests without a session id are matched by conversation history.
+- Model or effort switches resume the same agy conversation with `--conversation <id>`; idle workers are stopped after `AGY_WORKER_IDLE_SECONDS` (default 900) and resumed the same way on the next turn. `AGY_MAX_WORKERS` (default 4) bounds concurrent workers with least-recently-used eviction; all workers stop at interpreter exit.
+- Transparent recovery before any output is streamed: a worker that died while idle, a refused resume, an agy without `--input-format` (falls back to one-shot mode) or without `--effort` (flag dropped).
+- `client.cancel()` for Hermes interrupts; `classify_api_error` for quota, billing, auth, context overflow, model-not-found and timeouts; `fetch_account_usage` for `/usage`; reasoning effort forwarding through `build_api_kwargs_extras`.
+- Streaming with tools enabled: text streams immediately while possible `<tool_call>` openings are held back; tool calls stream as deltas; thinking output becomes `reasoning_content`.
+- Tool parsing for fenced JSON, unterminated blocks and bare JSON naming a known tool; full JSON schemas in the tool catalogue; tool-set changes sent mid-session; JSON-mode instructions for `response_format`.
+- Fast quota failover from agy's stderr and its own log file; credential-looking environment variables removed from agy's environment (`AGY_ENV_PASSTHROUGH`, `AGY_ENV_STRICT`, `AGY_ENV_ALLOWLIST`); `AGY_PROXY`; `AGY_DEBUG_PROMPT_DIR`.
+- Awaitable completions and `async for` streams for Hermes' async auxiliary path.
+- End-to-end tests against a fake agy speaking stream-json; `tests/live_verify.py` for a real agy.
+
+### Changed
+- Catalog grouped by base model with its efforts (`gemini-3.8-flash` + low/medium/high); suffixed ids still resolve. Hermes' reasoning effort maps to the nearest supported effort and is passed with `--effort`; models without effort variants get none; a model missing from the account falls back to the newest one of its family.
+- Declared context window is min(native, 239,000 tokens) to stay under agy's trajectory checkpoint; `model_capabilities` now uses Hermes' `context_window` key and covers base and suffixed ids.
+- Vision declared unsupported: agy receives text only, so Hermes describes images instead of their being dropped.
+- Setup status reports the real sign-in state when it can be determined.
+
+### Fixed
+- stderr was never read: a verbose agy could fill the pipe and hang the turn.
+- A silent agy blocked forever; reads now honour the timeout, including Hermes' `httpx.Timeout` objects (which the old `timeout > 0` comparison could not handle).
+- Killing agy now terminates its whole process group on POSIX (the language-server child was left running).
+- Hermes' reasoning effort never reached the client; `model_capabilities` used a key Hermes ignores.
+- Empty, error or result-less turns are reported as failures instead of empty answers.
+
 ## v3.0.0 — 2026-10-12
 
 ### Added
