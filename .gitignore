@@ -8,3 +8,5 @@ build/
 proxy.log
 .env
 desktop.ini
+/.agents
+/.playwright-mcp
